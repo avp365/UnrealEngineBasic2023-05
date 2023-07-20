@@ -2,8 +2,11 @@
 
 
 #include "Pickup.h"
-
+#include "Sound/SoundCue.h"
 #include "Components/SphereComponent.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 #define CUSTOM_DEPTH_PURPLE 250
 
@@ -28,13 +31,16 @@ APickup::APickup()
 	PickupMesh->SetRelativeScale3D(FVector(5.f, 5.f, 5.f));
 	PickupMesh->SetRenderCustomDepth(true);
 	PickupMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_PURPLE);
+
+	PickupEffectComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("PickupEffectComponent"));
+	PickupEffectComponent->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
 void APickup::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	GetWorldTimerManager().SetTimer(BindOverlapTimer, this, &APickup::BindOverlapTimerFinished, BindOverlapTime);
 }
 
 void APickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -42,14 +48,30 @@ void APickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 {
 }
 
+void APickup::BindOverlapTimerFinished()
+{
+	OverlapSphere->OnComponentBeginOverlap.AddDynamic(this, &APickup::OnSphereOverlap);
+}
+
 // Called every frame
 void APickup::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	PickupMesh->AddWorldRotation(FRotator(0.f, BaseTurnRate * DeltaTime, 0.f));
 }
 
 void APickup::Destroyed()
 {
 	Super::Destroyed();
+
+	if (PickupSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, PickupSound, GetActorLocation());
+	}
+	if (PickupEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, PickupEffect, GetActorLocation(), GetActorRotation());
+	}
 }
 
