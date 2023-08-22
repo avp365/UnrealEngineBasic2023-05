@@ -20,6 +20,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void Destroyed() override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UStaticMeshComponent* PickupMesh;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -30,14 +33,11 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	float BaseTurnRate = 45.f;
-	
+
 private:
 	UPROPERTY(EditAnywhere)
 	class USphereComponent* OverlapSphere;
-
-	UPROPERTY(EditAnywhere)
-	UStaticMeshComponent* PickupMesh;
-
+	
 	UPROPERTY(EditAnywhere)
 	class USoundCue* PickupSound;
 
